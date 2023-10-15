@@ -1,0 +1,53 @@
+﻿<Window x:Class="WPFTEST.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WPFTEST"
+        mc:Ignorable="d"
+          Title="Names" Height="180" Width="260">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+       
+        <!-- Bouton "Start Camera" -->
+        <Button Content="Scan item" Click="StartCameraButton_Click" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10" Grid.Row="0" />
+
+        <!-- Bouton "Stop Camera" -->
+        <Button Content="Delete product" Click="DeleteProduct_Click" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="10" Grid.Row="0" />
+
+        <!-- Zone de texte pour le code-barre -->
+        <TextBox Name="BarcodeTextBox" Width="300" Height="30" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="1" />
+
+        <!-- Bouton "Capture Photo" -->
+        <Button Content="Stop scan" Click="CapturePhotoButton_Click" HorizontalAlignment="Right" VerticalAlignment="Bottom" Grid.Row="1" />
+
+        <!-- Image du code-barre -->
+        <Image x:Name="BarcodeImage" Width="400" Height="100" HorizontalAlignment="Center" VerticalAlignment="Bottom" Grid.Row="0" Grid.RowSpan="2" />
+
+
+
+        <!-- Liste des codes-barres scannés -->
+        <ListView x:Name="BarcodeListView" Grid.Row="2">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Codes-barres scannés" Width="500">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" />
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                </GridView>
+            </ListView.View>
+        </ListView>
+        <TextBlock x:Name="TotalPriceTextBlock" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="10" />
+
+    </Grid>
+
+
+</Window>
