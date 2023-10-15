@@ -8,6 +8,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Interop;
@@ -25,8 +26,7 @@ namespace WPFTEST
         private FilterInfoCollection? videoDevices;
         private VideoCaptureDevice? videoSource;
         private ZXing.Windows.Compatibility.BarcodeReader barcodeReader;
-
-        //  private Dictionary<VariantDTO, int> scannedProducts = new();
+        private System.Drawing.Bitmap? capturedBitmap; // Déclarer une variable pour stocker l'image capturée
         private List<VariantDTO> scannedProducts = new();
 
         public  MainWindow()
@@ -36,22 +36,22 @@ namespace WPFTEST
                       videoDevices = new FilterInfoCollection(FilterCategory.VideoInputDevice);
             barcodeReader = new ZXing.Windows.Compatibility.BarcodeReader();
         }
-
-        private  void StartCameraButton_Click(object sender, RoutedEventArgs e)
+        //----------------------------ADD TO CARD-------------------------------------
+        private  void OnAddToCardClicked(object sender, RoutedEventArgs e)
         {
            
-           if (videoDevices.Count > 0)
+           if (videoDevices != null && videoDevices.Count > 0)
             {
                 videoSource = new VideoCaptureDevice(videoDevices[0].MonikerString);
-                videoSource.NewFrame += new NewFrameEventHandler(videoSource_NewFrame);
+                videoSource.NewFrame += new NewFrameEventHandler(AddToCard);
                 videoSource.Start();
+         
             }
             
         }
         
-        private System.Drawing.Bitmap? capturedBitmap; // Déclarer une variable pour stocker l'image capturée
-
-        private async void videoSource_NewFrame(object sender, NewFrameEventArgs eventArgs)
+      
+        private async  void AddToCard(object sender, NewFrameEventArgs eventArgs)
         {
             try
             {
@@ -69,112 +69,142 @@ namespace WPFTEST
               
                 // Utilisez le lecteur de code-barres pour tenter de lire le code-barre.
                 var  result = barcodeReader.Decode(capturedBitmap);
-
-               
-                if (result != null)
+                if(result != null) 
                 {
                     if (videoSource != null && videoSource.IsRunning)
                     {
                         videoSource.SignalToStop();
-                        
+
                     }
                     try
                     {
                         var product = await VariantsService.Instance.GetVariantAsync(result.Text);
-                        Dispatcher.Invoke(() => BarcodeTextBox.Text = result.Text);
+
 
                         if (product != null)
                         {
-                            Dispatcher.Invoke(() => BarcodeTextBox.Text = product.Name);                          
+                            Dispatcher.Invoke(() => BarcodeTextBox.Text = product.Name);
                             scannedProducts.Add(product);
-                            var groups = scannedProducts.ToLookup(v => v);                          
-                            var totalPrice = groups.Sum(group => group.Key.Price * group.ToArray().Length);
-                            var articles = groups.Select(group => $"{group.ToArray().Length}x {group.Key.Name} {group.Key.Price:C}");
-                            Dispatcher.Invoke(() => {
-                                BarcodeListView.ItemsSource = articles;
-                                TotalPriceTextBlock.Text = $"Total: {totalPrice:C}";
-                            });
-
+                            UpdateProductList();
                         }
                         else
                         {
-                            Dispatcher.Invoke(() => BarcodeTextBox.Text = "produit non trouvé.");
-                            if (videoSource != null && videoSource.IsRunning)
-                            {
-                                videoSource.SignalToStop();
-                                videoSource.WaitForStop();
-                            }
+                            Dispatcher.Invoke(() => BarcodeTextBox.Text = "le produit n'a pas été trouvé.");
+
                         }
                     }
                     catch
                     {
                         Dispatcher.Invoke(() => BarcodeTextBox.Text = "une erreur est survenue.");
-                        videoSource.SignalToStop();
+
                     }
                 }
-                else
+
+
+            }
+            catch (Exception)
+            {
+                Dispatcher.Invoke(() => BarcodeTextBox.Text = "Une erreur est survenue.");
+                if (videoSource != null && videoSource.IsRunning)
                 {
-                    // Aucun code-barre n'a été trouvé dans la photo.
-                    Dispatcher.Invoke(() => BarcodeTextBox.Text = "Not found!");
+                    videoSource.SignalToStop();
+
                 }
             }
-            catch (Exception ex)
-            {
-                // Gérez les erreurs de capture ici.
-            }
+           
+           
         }
-
-        private void DeleteProduct_Click(object sender, RoutedEventArgs e)
+        //---------------------------- END ADD TO CARD-------------------------------------
+        //---------------------------- DELETE FROM CARD-------------------------------------
+        private void OnDeleteFromCardClicked(object sender, RoutedEventArgs e)
         {
-            if (videoDevices.Count > 0)
+
+            if (videoDevices != null && videoDevices.Count > 0)
             {
                 videoSource = new VideoCaptureDevice(videoDevices[0].MonikerString);
-                videoSource.NewFrame += new NewFrameEventHandler(DeleteVariantFromCard);
+                videoSource.NewFrame += new NewFrameEventHandler(DeleteFromCard);
                 videoSource.Start();
-            }
-        }
-        private async void DeleteVariantFromCard(object sender, NewFrameEventArgs eventArgs)
-        {
-            
-        }
-        private void CapturePhotoButton_Click(object sender, RoutedEventArgs e)
-        {
-            // Capturez une photo à partir de la webcam lorsque l'utilisateur le souhaite.
-            if (videoSource != null && videoSource.IsRunning)
-            {
-                videoSource.SignalToStop();
-                videoSource.WaitForStop();
+
             }
 
-            // Utilisez le lecteur de code-barres pour tenter de lire le code-barre à partir de la photo capturée.
+        }
+
+
+        private  void DeleteFromCard(object sender, NewFrameEventArgs eventArgs)
+        {
             try
             {
-                if (capturedBitmap != null)
+                // Capturez une image à partir de la webcam.
+                capturedBitmap = (System.Drawing.Bitmap)eventArgs.Frame.Clone();
+                DecodingOptions readOptions = new()
                 {
-                    Result result = barcodeReader.Decode(capturedBitmap);
+                    PossibleFormats = new List<BarcodeFormat> { BarcodeFormat.EAN_13 },
+                    TryHarder = true
+                };
+                barcodeReader = new()
+                {
+                    Options = readOptions,
+                };
 
-                    if (result != null)
-                    {
-                        // Un code-barre a été lu avec succès.
-                        Dispatcher.Invoke(() => BarcodeTextBox.Text = result.Text);
-                    }
-                    else
-                    {
-                        // Aucun code-barre n'a été trouvé dans la photo.
-                        Dispatcher.Invoke(() => BarcodeTextBox.Text = "Not found!");
-                    }
-                }
-                else
+                // Utilisez le lecteur de code-barres pour tenter de lire le code-barre.
+                var result = barcodeReader.Decode(capturedBitmap);
+                if (result != null)
                 {
-                    // Gérer le cas où l'image capturée est null (non capturée).
+                    if (videoSource != null && videoSource.IsRunning)
+                    {
+                        videoSource.SignalToStop();
+
+                    }
+                    try
+                    {
+                        var product = scannedProducts.Where(p => p.EanNumber == result.Text).FirstOrDefault();
+
+
+                        if (product != null)
+                        {
+                            Dispatcher.Invoke(() => BarcodeTextBox.Text = product.Name);
+                            scannedProducts.Remove(product);
+                            UpdateProductList();
+                        }
+                        else
+                        {
+                            Dispatcher.Invoke(() => BarcodeTextBox.Text = "le produit n'a pas été trouvé.");
+
+                        }
+                    }
+                    catch
+                    {
+                        Dispatcher.Invoke(() => BarcodeTextBox.Text = "une erreur est survenue.");
+
+                    }
                 }
+
+
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                // Gérez les erreurs de capture ici.
-            }
-        }
+                Dispatcher.Invoke(() => BarcodeTextBox.Text = "Une erreur est survenue.");
+                if (videoSource != null && videoSource.IsRunning)
+                {
+                    videoSource.SignalToStop();
 
+                }
+            }
+
+
+        }
+        //---------------------------- ENDDELETE FROM CARD-------------------------------------
+
+        private void UpdateProductList()
+        {
+            var groups = scannedProducts.ToLookup(v => v);
+            var totalPrice = groups.Sum(group => group.Key.Price * group.ToArray().Length);
+            var articles = groups.Select(group => $"{group.ToArray().Length}x {group.Key.Name} {group.Key.Price:C}");
+            Dispatcher.Invoke(() => {
+                BarcodeListView.ItemsSource = articles;
+                TotalPriceTextBlock.Text = $"Total: {totalPrice:C}";
+            });
+        }
 
         private void StopCameraButton_Click(object sender, RoutedEventArgs e)
         {

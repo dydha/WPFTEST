@@ -15,16 +15,15 @@
 
        
         <!-- Bouton "Start Camera" -->
-        <Button Content="Scan item" Click="StartCameraButton_Click" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10" Grid.Row="0" />
+        <Button Content="Scan item" Click="OnAddToCardClicked" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10" Grid.Row="0" />
 
         <!-- Bouton "Stop Camera" -->
-        <Button Content="Delete product" Click="DeleteProduct_Click" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="10" Grid.Row="0" />
+        <Button Content="Delete product" Click="OnDeleteFromCardClicked" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="10" Grid.Row="0" />
 
         <!-- Zone de texte pour le code-barre -->
         <TextBox Name="BarcodeTextBox" Width="300" Height="30" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="1" />
 
-        <!-- Bouton "Capture Photo" -->
-        <Button Content="Stop scan" Click="CapturePhotoButton_Click" HorizontalAlignment="Right" VerticalAlignment="Bottom" Grid.Row="1" />
+       
 
         <!-- Image du code-barre -->
         <Image x:Name="BarcodeImage" Width="400" Height="100" HorizontalAlignment="Center" VerticalAlignment="Bottom" Grid.Row="0" Grid.RowSpan="2" />
