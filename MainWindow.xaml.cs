@@ -14,6 +14,7 @@ using System.Windows.Documents;
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
 using WPFTEST.DTOs;
+using WPFTEST.Exceptions;
 using WPFTEST.Services;
 using ZXing;
 using ZXing.Common;
@@ -67,7 +68,7 @@ namespace WPFTEST
                     Options = readOptions,
                 };
               
-                // Utilisez le lecteur de code-barres pour tenter de lire le code-barre.
+               
                 var  result = barcodeReader.Decode(capturedBitmap);
                 if(result != null) 
                 {
@@ -79,32 +80,31 @@ namespace WPFTEST
                     try
                     {
                         var product = await VariantsService.Instance.GetVariantAsync(result.Text);
-
-
-                        if (product != null)
-                        {
+                       
                             Dispatcher.Invoke(() => BarcodeTextBox.Text = product.Name);
                             scannedProducts.Add(product);
                             UpdateProductList();
-                        }
-                        else
-                        {
-                            Dispatcher.Invoke(() => BarcodeTextBox.Text = "le produit n'a pas été trouvé.");
-
-                        }
+                       
+                       
                     }
-                    catch
+                    catch(NotFoundException)
                     {
-                        Dispatcher.Invoke(() => BarcodeTextBox.Text = "une erreur est survenue.");
+                        Dispatcher.Invoke(() => BarcodeTextBox.Text = "Le produit n'a pas été trouvé.");
+
+                    }
+                    catch (Exception)
+                    {
+                        Dispatcher.Invoke(() => BarcodeTextBox.Text = "Une erreur est survenue.");
 
                     }
                 }
+              
 
 
             }
             catch (Exception)
             {
-                Dispatcher.Invoke(() => BarcodeTextBox.Text = "Une erreur est survenue.");
+                Dispatcher.Invoke(() => BarcodeTextBox.Text = " Une erreur est survenue.");
                 if (videoSource != null && videoSource.IsRunning)
                 {
                     videoSource.SignalToStop();
@@ -155,28 +155,20 @@ namespace WPFTEST
                         videoSource.SignalToStop();
 
                     }
-                    try
-                    {
+                   
                         var product = scannedProducts.Where(p => p.EanNumber == result.Text).FirstOrDefault();
-
-
                         if (product != null)
                         {
-                            Dispatcher.Invoke(() => BarcodeTextBox.Text = product.Name);
+                            Dispatcher.Invoke(() => BarcodeTextBox.Text = "Produit supprimé.");
                             scannedProducts.Remove(product);
                             UpdateProductList();
                         }
                         else
                         {
-                            Dispatcher.Invoke(() => BarcodeTextBox.Text = "le produit n'a pas été trouvé.");
+                            Dispatcher.Invoke(() => BarcodeTextBox.Text = "Le produit n'a pas encore été ajouté au panier.");
 
                         }
-                    }
-                    catch
-                    {
-                        Dispatcher.Invoke(() => BarcodeTextBox.Text = "une erreur est survenue.");
-
-                    }
+                   
                 }
 
 
@@ -193,7 +185,7 @@ namespace WPFTEST
 
 
         }
-        //---------------------------- ENDDELETE FROM CARD-------------------------------------
+        //---------------------------- END DELETE FROM CARD-------------------------------------
 
         private void UpdateProductList()
         {

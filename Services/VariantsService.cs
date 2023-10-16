@@ -7,6 +7,7 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Threading.Tasks;
 using WPFTEST.DTOs;
+using WPFTEST.Exceptions;
 
 namespace WPFTEST.Services
 {
@@ -40,38 +41,26 @@ namespace WPFTEST.Services
                 if (response.IsSuccessStatusCode)
                 {
                     var variant = await response.Content.ReadFromJsonAsync<VariantDTO>();
-                    return variant!;
+                    return variant;
+                }
+               
+                else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    throw new NotFoundException();
                 }
                 else
                 {
-                    throw new Exception();
+                    throw new HttpRequestException($"HTTP request failed with status code: {response.StatusCode}");
                 }
-            }
-            catch
+                
+              
+            }          
+            catch(Exception)
             {
-                throw new Exception();
+                throw;
             }
         }
-        public async Task<IEnumerable<string>> GetAllVariantAsync()
-        {
-            try
-            {
-                var response = await _httpClient.GetAsync($"https://localhost:7023/api/Variants/get-all");
-                if (response.IsSuccessStatusCode)
-                {
-                    var variants = await response.Content.ReadFromJsonAsync<IEnumerable<VariantDTO>>();
-                    return variants.Select(v => v.Name).ToList();
-                }
-                else
-                {
-                    throw new Exception();
-                }
-            }
-            catch
-            {
-                throw new Exception();
-            }
-        }
+       
     }
 
 

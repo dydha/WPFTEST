@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WPFTEST"
         mc:Ignorable="d"
-          Title="Names" Height="180" Width="260">
+          Title="Names" Height="Auto" Width="Auto">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -14,21 +14,14 @@
         </Grid.RowDefinitions>
 
        
-        <!-- Bouton "Start Camera" -->
+        <!-- Bouton "Scan item" -->
         <Button Content="Scan item" Click="OnAddToCardClicked" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10" Grid.Row="0" />
 
-        <!-- Bouton "Stop Camera" -->
+        <!-- Bouton "Delete product" -->
         <Button Content="Delete product" Click="OnDeleteFromCardClicked" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="10" Grid.Row="0" />
 
         <!-- Zone de texte pour le code-barre -->
         <TextBox Name="BarcodeTextBox" Width="300" Height="30" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="1" />
-
-       
-
-        <!-- Image du code-barre -->
-        <Image x:Name="BarcodeImage" Width="400" Height="100" HorizontalAlignment="Center" VerticalAlignment="Bottom" Grid.Row="0" Grid.RowSpan="2" />
-
-
 
         <!-- Liste des codes-barres scannés -->
         <ListView x:Name="BarcodeListView" Grid.Row="2">
